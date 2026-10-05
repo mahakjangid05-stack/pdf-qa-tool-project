@@ -102,7 +102,6 @@ async def ask_question(req: QuestionRequest):
             content={"error": str(e)}
         )
 
-
 @app.get("/status/")
 def get_status():
     """Check if PDF is loaded"""
@@ -118,7 +117,6 @@ def get_status():
             "status": "No PDF loaded",
             "message": "Upload a PDF using /upload-pdf/"
         }
-
 @app.get("/")
 def root():
     return {
@@ -129,7 +127,6 @@ def root():
             "GET /status/": "Check loaded PDF status"
         }
     }
-
 
 if __name__ == "__main__":
     import uvicorn

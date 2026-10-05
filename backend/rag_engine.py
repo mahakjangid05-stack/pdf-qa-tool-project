@@ -1,4 +1,7 @@
 ﻿import re
+import math
+from collections import Counter
+
 STOPWORDS = {
     "the", "a", "an", "is", "are", "was", "were", "of", "to", "in", "on", "for",
     "and", "or", "what", "which", "who", "how", "why", "when", "where", "does",
@@ -18,16 +21,30 @@ def _chunk_text(text: str, size: int = 1000, overlap: int = 200) -> list:
     return chunks
 
 def keyword_search(question: str, text: str, top_k: int = 3) -> str:
-    """Return the top_k chunks that share the most keywords with the question."""
+    """Return the top_k chunks, scoring rare question words higher."""
     q_words = _tokenize(question)
     if not q_words or not text:
         return ""
 
+    chunks = _chunk_text(text)
+    chunk_tokens = [_tokenize(c) for c in chunks]
+    n = len(chunks)
+
+    # har word kitne chunks mein aata hai
+    df = Counter()
+    for toks in chunk_tokens:
+        df.update(toks)
+
     scored = []
-    for chunk in _chunk_text(text):
-        score = len(q_words & _tokenize(chunk))
-        if score > 0:
-            scored.append((score, chunk))
+    for i, (chunk, toks) in enumerate(zip(chunks, chunk_tokens)):
+        matched = q_words & toks
+        if not matched:
+            continue
+        score = sum(math.log(n / df[w]) + 1 for w in matched)
+        scored.append((score, i, chunk))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    return "\n\n---\n\n".join(chunk for _, chunk in scored[:top_k])
+    top = sorted(scored[:top_k], key=lambda x: x[1])  # document order
+    return "\n\n---\n\n".join(chunk for _, _, chunk in top)
+
+
