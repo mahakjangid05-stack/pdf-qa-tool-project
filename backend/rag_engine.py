@@ -3,13 +3,15 @@ import math
 from collections import Counter
 
 STOPWORDS = {
-    "the", "a", "an", "is", "are", "was", "were", "of", "to", "in", "on", "for",
-    "and", "or", "what", "which", "who", "how", "why", "when", "where", "does",
-    "do", "did", "this", "that", "with", "about", "from", "it", "be", "as", "by",
+    "who", "what", "when", "where", "why", "how", "which",
+    "is", "are", "was", "were", "be", "been",
+    "the", "a", "an", "of", "in", "on", "at", "to", "for", "and", "or",
+    "this", "that", "these", "those", "about", "it", "its",
+    "do", "does", "did", "tell", "me", "explain",
 }
 
-def _tokenize(text: str) -> set:
-    words = re.findall(r"[a-zA-Z0-9]+", text.lower())
+def _tokenize(text):
+    words = re.findall(r"\w+", text.lower())
     return {w for w in words if w not in STOPWORDS and len(w) > 2}
 
 def _chunk_text(text: str, size: int = 1000, overlap: int = 200) -> list:

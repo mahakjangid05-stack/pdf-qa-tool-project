@@ -13,19 +13,16 @@ from backend.llm_handler import ask_llm
 
 load_dotenv()
 
-
 app = FastAPI()
 
 # Global dictionary to store extracted text in memory
 pdf_storage = {
     "text": "",
     "filename": None
-}
-
+}    
 # ==================== PYDANTIC MODELS ====================
 class QuestionRequest(BaseModel):
     question: str
-
 # ==================== API ENDPOINTS ====================
 
 @app.post("/upload-pdf/")
@@ -66,36 +63,37 @@ async def upload_pdf(file: UploadFile = File(...)):
             status_code=400,
             content={"error": str(e)}
         )
-
 @app.post("/ask/")
 async def ask_question(req: QuestionRequest):
     """Ask a question about the uploaded PDF"""
-    
-    # ✓ FIX: Use Pydantic model for POST body instead of query param
     question = req.question
-    
+
     if not pdf_storage["text"]:
         return JSONResponse(
             status_code=400,
             content={"error": "No PDF uploaded yet. Please upload a PDF first."}
         )
-    
+
     try:
-        # ✓ Call RAG_engine function
-        relevant_context = keyword_search(question, pdf_storage["text"])
-        if not relevant_context.strip():
-            relevant_context = pdf_storage["text"][:3000]
-        
-        # ✓ Call llm_handler function
-        answer = ask_llm(question, relevant_context)
-        
+        context = keyword_search(question, pdf_storage["text"])
+
+        if not context:
+            return {
+                "question": question,
+                "answer": "Is document me iska jawab nahi mila.",
+                "source_file": pdf_storage.get("filename", "unknown"),
+                "context_used": "",
+            }
+
+        answer = ask_llm(question, context)
+
         return {
             "question": question,
             "answer": answer,
-            "source_file": pdf_storage["filename"],
-            "context_used": relevant_context[:300]
+            "source_file": pdf_storage.get("filename", "unknown"),
+            "context_used": context,
         }
-    
+
     except Exception as e:
         return JSONResponse(
             status_code=400,
